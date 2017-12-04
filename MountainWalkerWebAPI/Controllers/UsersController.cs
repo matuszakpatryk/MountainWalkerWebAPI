@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MountainWalkerWebAPI.Models;
+using System.Collections;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MountainWalkerWebAPI.Controllers
 {
@@ -24,32 +27,39 @@ namespace MountainWalkerWebAPI.Controllers
         [HttpGet]
         public IEnumerable<User> GetUsers()
         {
-            Console.WriteLine("test");
             return _context.Users;
         }
 
-        // GET: api/Users/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetUser([FromRoute]int id)
+        //[HttpGet("{login}")]
+        //public string CheckLogin(String login)
+        //{
+        //    Console.WriteLine("test");
+        //    return $"Login: {login}";
+        //}
+
+        //This method returns true when login and password match
+
+        // GET: api/Users/login?password=password
+        [HttpGet("{login}")]
+        public string CheckLogin(string login, string password)
         {
-            if (!ModelState.IsValid)
+            var users = _context.Users;
+            foreach (var item in users)
             {
-                return BadRequest(ModelState);
+                if (item.Login.Equals(login))
+                {                   
+                    if(CalculateHash(item.Password).Equals(CalculateHash(password)))
+                    {
+                        return "true";
+                    }
+                }
             }
-
-            var user = await _context.Users.SingleOrDefaultAsync(m => m.Id == id);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(user);
+            return "false";
         }
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser([FromRoute] int id, [FromBody] User user)
+        public async Task<IActionResult> PutUser(int id, User user)
         {
             if (!ModelState.IsValid)
             {
@@ -121,6 +131,20 @@ namespace MountainWalkerWebAPI.Controllers
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);
+        }
+
+        private string CalculateHash(string password)
+        {
+            MD5 md5 = MD5.Create();
+            byte[] inputBytes = Encoding.ASCII.GetBytes(password);
+            byte[] hash = md5.ComputeHash(inputBytes);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("X2"));
+            }
+            return sb.ToString();
         }
     }
 }
