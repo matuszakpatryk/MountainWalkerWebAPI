@@ -23,6 +23,7 @@ namespace MountainWalkerWebAPI.Controllers
             _context = context;
         }
 
+        //Return all users
         // GET: api/Users
         [HttpGet]
         public IEnumerable<User> GetUsers()
@@ -30,15 +31,7 @@ namespace MountainWalkerWebAPI.Controllers
             return _context.Users;
         }
 
-        //[HttpGet("{login}")]
-        //public string CheckLogin(String login)
-        //{
-        //    Console.WriteLine("test");
-        //    return $"Login: {login}";
-        //}
-
         //This method returns true when login and password match
-
         // GET: api/Users/login?password=password
         [HttpGet("{login}")]
         public string CheckLogin(string login, string password)
@@ -57,18 +50,19 @@ namespace MountainWalkerWebAPI.Controllers
             return "false";
         }
 
-        // PUT: api/Users/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        //Updates data
+        // PUT: api/Users
+        [HttpPut]
+        public async Task<string> PutUser([FromBody] User user)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return "false";
             }
 
-            if (id != user.Id)
+            if (user.Id != user.Id)
             {
-                return BadRequest();
+                return "false";
             }
 
             _context.Entry(user).State = EntityState.Modified;
@@ -76,35 +70,52 @@ namespace MountainWalkerWebAPI.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return "true";
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id))
+                int temp = user.Id ?? default(int);
+                if (!UserExists(temp))
                 {
-                    return NotFound();
+                    return "user not exist";
                 }
                 else
                 {
-                    throw;
+                    return "user exist";
                 }
             }
 
-            return NoContent();
         }
 
+        //Add new user
         // POST: api/Users
         [HttpPost]
-        public async Task<IActionResult> PostUser([FromBody] User user)
+        public async Task<string> PostUser([FromBody] User user)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return "false";
+            }
+
+            user.Id = null;
+
+            if(!CheckData(user))
+            {
+                return "false";
             }
 
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return "true";
+            } catch (Exception e)
+            {
+                return e.Message.ToString();
+            }
+            
         }
 
         // DELETE: api/Users/5
@@ -131,6 +142,33 @@ namespace MountainWalkerWebAPI.Controllers
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);
+        }
+
+        bool IsValidEmail(string email)
+        {
+            try
+            {
+                var addr = new System.Net.Mail.MailAddress(email);
+                return addr.Address == email;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool CheckData(User user)
+        {
+            if ((user.Login.Length<3) || (user.Password.Length<6) || (user.Email.Length<6) || (user.Name.Length<3) || (user.Surname.Length<3))
+            {
+                return false;
+            }
+
+            if (!IsValidEmail(user.Email))
+            {
+                return false;
+            }
+            return true;
         }
 
         private string CalculateHash(string password)
