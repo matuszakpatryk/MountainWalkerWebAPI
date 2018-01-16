@@ -9,11 +9,12 @@ using MountainWalkerWebAPI.Models;
 using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace MountainWalkerWebAPI.Controllers
 {
     [Produces("application/json")]
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     public class UsersController : Controller
     {
         private readonly UserContext _context;
@@ -116,6 +117,20 @@ namespace MountainWalkerWebAPI.Controllers
                 return e.Message.ToString();
             }
             
+        }
+
+        // POST api/Users
+        [HttpPost]
+        public async Task<IActionResult> Username([FromBody] string login)
+        {
+            foreach (User user in _context.Users)
+            {
+                if (user.Login.Equals(login))
+                {
+                    return new OkObjectResult(JsonConvert.SerializeObject(user));
+                }
+            }
+            return new OkObjectResult(JsonConvert.SerializeObject("false"));
         }
 
         // DELETE: api/Users/5
