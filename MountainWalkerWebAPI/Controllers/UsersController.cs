@@ -10,6 +10,7 @@ using System.Collections;
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace MountainWalkerWebAPI.Controllers
 {
@@ -25,7 +26,7 @@ namespace MountainWalkerWebAPI.Controllers
         }
 
         //Return all users
-        // GET: api/Users
+        // GET: api/Users/GetUsers
         [HttpGet]
         public IEnumerable<User> GetUsers()
         {
@@ -33,22 +34,23 @@ namespace MountainWalkerWebAPI.Controllers
         }
 
         //This method returns true when login and password match
-        // GET: api/Users/login?password=password
-        [HttpGet("{login}")]
-        public string CheckLogin(string login, string password)
+        // POST: api/Users/CheckLogin
+        [HttpPost]
+        public bool CheckLogin([FromBody] User userCheck)
         {
             var users = _context.Users;
-            foreach (var item in users)
+            userCheck.Password = CalculateHash(userCheck.Password);
+            foreach (User user in _context.Users)
             {
-                if (item.Login.Equals(login))
+                if (user.Login.Equals(userCheck.Login))
                 {                   
-                    if(CalculateHash(item.Password).Equals(CalculateHash(password)))
+                    if(user.Password.Equals(userCheck.Password))
                     {
-                        return "true";
+                        return true;
                     }
                 }
             }
-            return "false";
+            return false;
         }
 
         //Updates data
@@ -61,7 +63,7 @@ namespace MountainWalkerWebAPI.Controllers
                 return "false";
             }
 
-            if (user.Id != user.Id)
+            if (user.UserID != user.UserID)
             {
                 return "false";
             }
@@ -75,7 +77,7 @@ namespace MountainWalkerWebAPI.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                int temp = user.Id ?? default(int);
+                int temp = user.UserID ?? default(int);
                 if (!UserExists(temp))
                 {
                     return "user not exist";
@@ -91,35 +93,35 @@ namespace MountainWalkerWebAPI.Controllers
         //Add new user
         // POST: api/Users
         [HttpPost]
-        public async Task<string> PostUser([FromBody] User user)
+        public async Task<bool> PostUser([FromBody] User user)
         {
             if (!ModelState.IsValid)
             {
-                return "false";
+                return false;
             }
 
-            user.Id = null;
+            user.UserID = null;
 
             if(!CheckData(user))
             {
-                return "false";
+                return false;
             }
 
+            user.Password = CalculateHash(user.Password);
             _context.Users.Add(user);
-
 
             try
             {
                 await _context.SaveChangesAsync();
-                return "true";
+                return true;
             } catch (Exception e)
             {
-                return e.Message.ToString();
+                return false;
             }
             
         }
 
-        // POST api/Users
+        // POST api/Users/Username
         [HttpPost]
         public async Task<IActionResult> Username([FromBody] string login)
         {
@@ -142,7 +144,7 @@ namespace MountainWalkerWebAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = await _context.Users.SingleOrDefaultAsync(m => m.Id == id);
+            var user = await _context.Users.SingleOrDefaultAsync(m => m.UserID == id);
             if (user == null)
             {
                 return NotFound();
@@ -156,7 +158,7 @@ namespace MountainWalkerWebAPI.Controllers
 
         private bool UserExists(int id)
         {
-            return _context.Users.Any(e => e.Id == id);
+            return _context.Users.Any(e => e.UserID == id);
         }
 
         bool IsValidEmail(string email)
