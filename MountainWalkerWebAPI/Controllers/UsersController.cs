@@ -53,6 +53,24 @@ namespace MountainWalkerWebAPI.Controllers
             return false;
         }
 
+        //This method returns name and surname for given lognin
+        // POST: api/Users/GiveName
+        [HttpPost]
+        public string GiveName([FromBody] User userr)
+        {
+            string result;
+            foreach (User user in _context.Users)
+            {
+                if (user.Login.Equals(userr.Login))
+                {
+                    result = user.Name + " " + user.Surname;
+                    return result;
+                }
+            }
+            result = "falseee";
+            return result;
+        }
+
         //Updates data
         // PUT: api/Users
         [HttpPut]
