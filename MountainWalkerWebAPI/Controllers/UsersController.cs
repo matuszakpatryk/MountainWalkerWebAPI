@@ -53,10 +53,10 @@ namespace MountainWalkerWebAPI.Controllers
             return false;
         }
 
-        //This method returns name and surname for given lognin
-        // POST: api/Users/GiveName
+        //This method returns name and surname for given login
+        // POST: api/Users/GetName
         [HttpPost]
-        public string GiveName([FromBody] User userr)
+        public string GetName([FromBody] User userr)
         {
             string result;
             foreach (User user in _context.Users)
@@ -67,8 +67,7 @@ namespace MountainWalkerWebAPI.Controllers
                     return result;
                 }
             }
-            result = "falseee";
-            return result;
+            return "false";
         }
 
         //Updates data
@@ -138,19 +137,20 @@ namespace MountainWalkerWebAPI.Controllers
             }
             
         }
-
-        // POST api/Users/Username
+        
+		// POST api/Users/GetAchivementsForUser
         [HttpPost]
-        public async Task<IActionResult> Username([FromBody] string login)
+		public List<int> GetAchivementsForUser([FromBody] User user)
         {
-            foreach (User user in _context.Users)
+			List<int> ResultList = new List<int>();
+            foreach (UserAchivements obj in _context.UserAchivements)
             {
-                if (user.Login.Equals(login))
+                if (obj.UserID == user.UserID)
                 {
-                    return new OkObjectResult(JsonConvert.SerializeObject(user));
+					ResultList.Add(obj.AchivementID);
                 }
             }
-            return new OkObjectResult(JsonConvert.SerializeObject("false"));
+			return ResultList;
         }
 
         // DELETE: api/Users/5

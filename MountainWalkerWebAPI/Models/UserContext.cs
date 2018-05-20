@@ -12,16 +12,9 @@ namespace MountainWalkerWebAPI.Models
 
         public UserContext(DbContextOptions<UserContext> options) : base(options)
         {
-
         }
-
         public DbSet<User> Users { get; set; }
-        public DbSet<Point> Point { get; set; }
-        public DbSet<Trail> Trail { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Point>().ToTable("Point");
-        }
+		public DbSet<Achievements> Achievements { get; set; }
+		public DbSet<UserAchivements> UserAchivements { get; set; }
     }
 }
